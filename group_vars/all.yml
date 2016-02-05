@@ -1,0 +1,9 @@
+---
+# Defaults
+
+# ssh_user: registry
+# ssh_public_key: "{{ lookup('file', '~/.ssh/id_rsa.pub') }}"
+# firewall_open_ports: [22, 80, 443]
+# apt_packages: [ufw, fail2ban, vim, curl, wget, git, python-pip]
+# pip_packages: [docker-py, passlib]
+# registry_domain: "{{ inventory_hostname }}"

@@ -1,0 +1,101 @@
+---
+- name: Create dirs
+  file:
+    dest: "{{ item }}"
+    state: directory
+  with_items:
+    - /opt/proxy/vhost.d
+    - /opt/proxy/htpasswd
+    - /opt/proxy/certs
+    - /opt/letsencrypt
+    - /var/lib/registry
+
+# stop is required because letsencrypt container must expose 80/443 ports
+- name: Stop docker registry
+  docker:
+    name: registry
+    image: "registry:2"
+    state: stopped
+
+- name: Stop nginx proxy
+  docker:
+    name: proxy
+    image: jwilder/nginx-proxy
+    state: stopped
+
+- name: Obtain SSL certificate
+  docker:
+    image: "quay.io/letsencrypt/letsencrypt:latest"
+    name: letsencrypt
+    ports:
+      - "443:443"
+      - "80:80"
+    volumes:
+      - "/opt/letsencrypt:/etc/letsencrypt"
+      - "/var/lib/letsencrypt:/var/lib/letsencrypt"
+    command: >
+      certonly
+        --domain {{ registry_domain }}
+        --authenticator standalone
+        --email {{ registry_email }}
+        --server https://acme-v01.api.letsencrypt.org/directory
+        --agree-tos
+
+- name: Remove letsencrypt container
+  sudo: yes
+  docker:
+    image: "quay.io/letsencrypt/letsencrypt:latest"
+    name: letsencrypt
+
+- name: Create symlink to SSL certificates
+  file:
+    src: "{{ item.src }}"
+    dest: "{{ item.dest }}"
+    follow: yes
+    state: link
+    force: yes
+  with_items:
+    - src: "/opt/letsencrypt/live/{{ registry_domain }}/privkey.pem"
+      dest: "/opt/proxy/certs/{{ registry_domain }}.key"
+    - src: "/opt/letsencrypt/live/{{ registry_domain }}/fullchain.pem"
+      dest: "/opt/proxy/certs/{{ registry_domain }}.crt"
+
+- name: Run nginx proxy
+  docker:
+    name: proxy
+    image: jwilder/nginx-proxy
+    restart_policy: always
+    restart_policy_retry: 3
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - "/opt/proxy/vhost.d:/etc/nginx/vhost.d:ro"
+      - "/opt/proxy/htpasswd:/etc/nginx/htpasswd:ro"
+      - "/opt/proxy/certs:/etc/nginx/certs:ro"
+      - "/opt/letsencrypt:/opt/letsencrypt:ro"
+      - "/var/run/docker.sock:/tmp/docker.sock:ro"
+
+- name: Copy docker registry vhost config
+  copy:
+    src: registry.conf
+    dest: /opt/proxy/vhost.d/{{ registry_domain }}
+
+- name: Generate basic auth file
+  htpasswd:
+    path: /opt/proxy/htpasswd/{{ registry_domain }}
+    name: "{{ registry_username }}"
+    password: "{{ registry_password }}"
+  no_log: true
+
+- name: Run docker registry
+  docker:
+    name: registry
+    image: "registry:2"
+    restart_policy: always
+    restart_policy_retry: 3
+    env:
+      VIRTUAL_HOST: "{{ registry_domain }}"
+      VIRTUAL_PORT: 5000
+    volumes:
+      - "/var/lib/registry:/var/lib/registry"

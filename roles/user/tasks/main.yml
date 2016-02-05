@@ -1,0 +1,18 @@
+---
+- name: Create user
+  user:
+    name: "{{ ssh_user }}"
+    shell: /bin/bash
+    generate_ssh_key: yes
+
+- name: Add local SSH public key to authorized keys
+  authorized_key:
+    user: user
+    key: "{{ ssh_public_key }}"
+
+- name: Add user to sudoers
+  lineinfile:
+    dest: /etc/sudoers
+    regexp: "{{ ssh_user }} ALL"
+    line: "{{ ssh_user }} ALL=(ALL) NOPASSWD: ALL"
+    state: present

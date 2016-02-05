@@ -1,0 +1,3 @@
+---
+apt_packages: [ufw, fail2ban, vim, curl, wget, git, python-pip]
+pip_packages: [docker-py, passlib]

@@ -1,0 +1,11 @@
+---
+- name: Install apt packages
+  apt:
+    state: installed
+    pkg: "{{ item }}"
+  with_items: apt_packages
+
+- name: Install pip packages
+  pip:
+    name: "{{ item }}"
+  with_items: pip_packages

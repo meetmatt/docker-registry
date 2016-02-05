@@ -1,0 +1,8 @@
+#!/usr/bin/env ansible-playbook
+---
+- name: Reissue docker registry SSL certs
+  hosts: all
+  become: yes
+  remote_user: "{{ ssh_user }}"
+  tasks:
+    - { task: registry, tag: registry }

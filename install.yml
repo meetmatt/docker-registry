@@ -1,0 +1,10 @@
+#!/usr/bin/env ansible-playbook
+---
+- name: Install private secured docker registry
+  hosts: all
+  become: yes
+  remote_user: "{{ ssh_user }}"
+  tasks:
+    - { task: packages, tag: packages }
+    - { task: firewall, tag: firewall }
+    - { task: registry, tag: registry }

@@ -1,0 +1,2 @@
+---
+firewall_open_ports: [22, 80, 443]

@@ -1,0 +1,12 @@
+---
+- name: Close all ports
+  ufw:
+    state: enabled
+    policy: deny
+
+- name: Open allowed ports
+  ufw:
+    rule: allow
+    port: "{{ item }}"
+    proto: tcp
+  with_items: firewall_open_ports
