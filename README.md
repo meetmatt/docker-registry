@@ -1,4 +1,6 @@
-# Private docker registry ansible playbooks
+# Ansible playbooks to roll out private docker registry
+
+*Note* ubuntu 14.04 is the only supported and tested OS.
 
 ## Step 1
 
@@ -25,7 +27,7 @@ Install docker registry:
 $ ./install.yml
 ```
 
-## Step 5
+## Step 6
 
 After 3 months you will have to reissue SSL certificates manually:
 
