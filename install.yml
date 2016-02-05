@@ -7,4 +7,5 @@
   tasks:
     - { task: packages, tag: packages }
     - { task: firewall, tag: firewall }
+    - { task: docker,   tag: docker }
     - { task: registry, tag: registry }
